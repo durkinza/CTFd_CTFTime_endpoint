@@ -26,7 +26,6 @@ ctftime_namespace = Namespace('ctftime', description="Endpoint to retrieve score
 
 @ctftime_namespace.route('')
 class ScoreboardList(Resource):
-    @check_account_visibility
     @check_challenge_visibility
     @during_ctf_time_only
     @check_score_visibility
