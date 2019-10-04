@@ -1,3 +1,4 @@
 {
-    "name": "CTFTime Api Endpoint"
+    "name": "CTFTime Api Endpoint",
+	"route": "/api/v1/ctftime"
 }

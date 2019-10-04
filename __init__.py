@@ -1,6 +1,6 @@
 from flask import Blueprint
 from flask_restplus import Api
-from routes import ctftime_namespace
+from .routes import ctftime_namespace
 
 def load(app):
 	api = Blueprint("ctftime_api", __name__, url_prefix="/api/v1")
