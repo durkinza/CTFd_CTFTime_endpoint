@@ -28,9 +28,7 @@ ctftime_namespace = Namespace('ctftime', description="Endpoint to retrieve score
 @ctftime_namespace.route('')
 class ScoreboardList(Resource):
 	@check_challenge_visibility
-	@during_ctf_time_only
 	@check_score_visibility
-	@check_account_visibility
 	@cache.cached(timeout=60, key_prefix=make_cache_key)
 	def get(self):
 		response = {
@@ -56,7 +54,7 @@ class ScoreboardList(Resource):
 
 		solves = Solves.query.filter(Solves.account_id.in_(team_ids))
 		if freeze:
-			solves = solves.filter(Solves.date < unix_time_to_utc(freeze))
+			solves = solves.filter(Solves.date < unix_time_to_utc(freeze))	
 
 		for i, team in enumerate(team_ids):
 			team_standing = {
@@ -65,13 +63,12 @@ class ScoreboardList(Resource):
 				'score': float(standings[i].score),
 				'taskStats': {}
 			}
-			for solve in solves:
-				if solve.account_id == team:
-					chall_name = challenges_ids[solve.challenge_id]
-					print(solve.date)
-					team_standing["taskStats"][chall_name] ={
-						"points": solve.challenge.value,
-						"time": unix_time(solve.date),
-					}
+			team_solves = solves.filter(Solves.account_id == standings[i].account_id)
+			for solve in team_solves:
+				chall_name = challenges_ids[solve.challenge_id]
+				team_standing["taskStats"][chall_name] ={
+					"points": solve.challenge.value,
+					"time": unix_time(solve.date),
+				}
 			response['standings'].append(team_standing)
 		return response
