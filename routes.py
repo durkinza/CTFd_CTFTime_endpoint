@@ -25,6 +25,9 @@ from sqlalchemy.sql import or_, and_, any_
 ctftime_namespace = Namespace('ctftime', description="Endpoint to retrieve scores for ctftime")
 
 
+def unicode_safe(string):
+	return string.encode('unicode_escape').decode()
+
 @ctftime_namespace.route('')
 class ScoreboardList(Resource):
 	@check_challenge_visibility
@@ -45,7 +48,7 @@ class ScoreboardList(Resource):
 
 		challenges_ids={}
 		for i, x in enumerate(challenges):
-			response['tasks'].append(x.name+" "+str(x.value))
+			response['tasks'].append(unicode_safe(x.name)+" "+str(x.value))
 			challenges_ids[x.id]=x.name
 
 		if mode == TEAMS_MODE:
@@ -59,14 +62,14 @@ class ScoreboardList(Resource):
 		for i, team in enumerate(team_ids):
 			team_standing = {
 				'pos': i+1,
-				'team': standings[i].name,
+				'team': unicode_safe(standings[i].name),
 				'score': float(standings[i].score),
 				'taskStats': {}
 			}
 			team_solves = solves.filter(Solves.account_id == standings[i].account_id)
 			for solve in team_solves:
 				chall_name = challenges_ids[solve.challenge_id]
-				team_standing["taskStats"][chall_name] ={
+				team_standing["taskStats"][unicode_safe(chall_name)] ={
 					"points": solve.challenge.value,
 					"time": unix_time(solve.date),
 				}
