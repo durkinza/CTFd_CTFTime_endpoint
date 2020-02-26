@@ -13,7 +13,7 @@ from CTFd.utils.decorators import (
 from CTFd.utils.decorators.visibility import (
     check_challenge_visibility,
     check_score_visibility,
-	check_account_visibility
+    check_account_visibility
 )
 from CTFd.utils.config.visibility import (
     scores_visible,
@@ -26,52 +26,53 @@ ctftime_namespace = Namespace('ctftime', description="Endpoint to retrieve score
 
 
 def unicode_safe(string):
-	return string.encode('unicode_escape').decode()
+    return string.encode('unicode_escape').decode()
+
 
 @ctftime_namespace.route('')
 class ScoreboardList(Resource):
-	@check_challenge_visibility
-	@check_score_visibility
-	@cache.cached(timeout=60, key_prefix=make_cache_key)
-	def get(self):
-		response = {
-			'tasks': [],
-			'standings': []
-		}
+    @check_challenge_visibility
+    @check_score_visibility
+    @cache.cached(timeout=60, key_prefix=make_cache_key)
+    def get(self):
+        response = {
+            'tasks': [],
+            'standings': []
+        }
 
-		mode = get_config("user_mode")
-		freeze = get_config("freeze")
+        mode = get_config("user_mode")
+        freeze = get_config("freeze")
 
-		challenges = Challenges.query.filter(
-			and_(Challenges.state != 'hidden', Challenges.state != 'locked')
-		).order_by(Challenges.value).all()
+        challenges = Challenges.query.filter(
+            and_(Challenges.state != 'hidden', Challenges.state != 'locked')
+        ).order_by(Challenges.value).all()
 
-		challenges_ids={}
-		for i, x in enumerate(challenges):
-			response['tasks'].append(unicode_safe(x.name)+" "+str(x.value))
-			challenges_ids[x.id]=x.name
+        challenges_ids = {}
+        for i, x in enumerate(challenges):
+            response['tasks'].append(unicode_safe(x.name) + " " + str(x.value))
+            challenges_ids[x.id] = unicode_safe(x.name) + " " + str(x.value)
 
-		if mode == TEAMS_MODE:
-			standings = get_standings()
-			team_ids = [team.account_id for team in standings]
+        if mode == TEAMS_MODE:
+            standings = get_standings()
+            team_ids = [team.account_id for team in standings]
 
-		solves = Solves.query.filter(Solves.account_id.in_(team_ids))
-		if freeze:
-			solves = solves.filter(Solves.date < unix_time_to_utc(freeze))	
+        solves = Solves.query.filter(Solves.account_id.in_(team_ids))
+        if freeze:
+            solves = solves.filter(Solves.date < unix_time_to_utc(freeze))
 
-		for i, team in enumerate(team_ids):
-			team_standing = {
-				'pos': i+1,
-				'team': unicode_safe(standings[i].name),
-				'score': float(standings[i].score),
-				'taskStats': {}
-			}
-			team_solves = solves.filter(Solves.account_id == standings[i].account_id)
-			for solve in team_solves:
-				chall_name = challenges_ids[solve.challenge_id]
-				team_standing["taskStats"][unicode_safe(chall_name)] ={
-					"points": solve.challenge.value,
-					"time": unix_time(solve.date),
-				}
-			response['standings'].append(team_standing)
-		return response
+        for i, team in enumerate(team_ids):
+            team_standing = {
+                'pos': i+1,
+                'team': unicode_safe(standings[i].name),
+                'score': float(standings[i].score),
+                'taskStats': {}
+            }
+            team_solves = solves.filter(Solves.account_id == standings[i].account_id)
+            for solve in team_solves:
+                chall_name = challenges_ids[solve.challenge_id]
+                team_standing["taskStats"][chall_name] = {
+                    "points": solve.challenge.value,
+                    "time": unix_time(solve.date),
+                }
+            response['standings'].append(team_standing)
+        return response
