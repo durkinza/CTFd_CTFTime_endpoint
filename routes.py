@@ -1,4 +1,4 @@
-from flask_restplus import Namespace, Resource
+from flask_restx import Namespace, Resource
 from flask import session, jsonify
 
 from CTFd.models import Solves, Challenges
@@ -43,6 +43,7 @@ class ScoreboardList(Resource):
         mode = get_config("user_mode")
         freeze = get_config("freeze")
 
+        # Get Challenges
         challenges = Challenges.query.filter(
             and_(Challenges.state != 'hidden', Challenges.state != 'locked')
         ).order_by(Challenges.value).all()
@@ -52,9 +53,12 @@ class ScoreboardList(Resource):
             response['tasks'].append(unicode_safe(x.name) + " " + str(x.value))
             challenges_ids[x.id] = unicode_safe(x.name) + " " + str(x.value)
 
+        # Get Standings
         if mode == TEAMS_MODE:
             standings = get_standings()
             team_ids = [team.account_id for team in standings]
+        else:
+          abort(501, "CTFTime only accepts team scores.")
 
         solves = Solves.query.filter(Solves.account_id.in_(team_ids))
         if freeze:
